@@ -3,34 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple HTML Page</title>
+    <title>Google Maps Example</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            text-align: center;
-            padding: 20px;
-        }
-        header {
-            background-color: #007bff;
-            color: #fff;
-            padding: 10px;
-        }
-        h1 {
-            font-size: 36px;
-        }
-        p {
-            font-size: 18px;
+        /* Define a CSS style to set the map's size */
+        #map {
+            height: 400px;
+            width: 100%;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to My Simple HTML Page</h1>
-    </header>
-    <main>
-        <p>This is a basic HTML page with some minimal styling to make it look presentable.</p>
-        <p>Feel free to customize and add more content to make it your own!</p>
-    </main>
+    <h1>My Google Map</h1>
+    <!-- Create a div element to hold the map with a unique id -->
+    <div id="map"></div>
+
+    <!-- Include the Google Maps JavaScript API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap" async defer></script>
+
+    <script>
+        // Function to initialize the map
+        function initMap() {
+            // Define the location for the map center (latitude and longitude)
+            const mapCenter = { lat: 40.7128, lng: -74.0060 }; // New York City coordinates
+
+            // Create a new map object centered at the specified location
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: mapCenter,
+                zoom: 12 // Set the initial zoom level
+            });
+
+            // You can add markers, polygons, and other map features here
+            // Example:
+            /*
+            const marker = new google.maps.Marker({
+                position: mapCenter,
+                map: map,
+                title: 'My Location'
+            });
+            */
+        }
+    </script>
 </body>
 </html>
