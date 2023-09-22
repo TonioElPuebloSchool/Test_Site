@@ -3,57 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Layer and Restricted Map</title>
+    <title>Reunion Map</title>
     <style>
-        /* Define a CSS style to set the map's size */
-        #map {
-            height: 400px;
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #map-container {
+            position: absolute;
+            top: 40px;
+            left: 0;
             width: 100%;
+            height: 100%;
+        }
+        #nav-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background-color: #333; /* Background color for the navigation menu */
+            color: #fff; /* Text color for the menu items */
+            z-index: 999;
+        }
+        #nav-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+        #nav-menu li {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        #info-panel {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            width: 40%;
+            height: 100%;
+            background-color: #fff;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+            transform: translateX(100%); /* Adjusted initial position */
+        }
+        #info-panel-arrow {
+            position: absolute;
+            top: 50%;
+            left: -20px; /* Adjusted left position to the left side of the panel */
+            transform: translateY(-50%) rotate(90deg); /* Rotated to face right */
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #3a1414;
+            cursor: pointer;
+        }
+        #map-in-panel {
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
 <body>
-    <h1>Custom Layer and Restricted Map</h1>
-    <!-- Create a div element to hold the map with a unique id -->
-    <div id="map"></div>
-
-    <!-- Include the Google Maps JavaScript API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxA1cdWCvsuIZsdxrWAsqXwIX5zn4D_6Q&callback=initMap" async defer></script>
-
+    <div id="nav-menu">
+        <ul>
+            <li><a href="#menu" style="text-decoration: none; color: #fff;">Menu</a></li>
+            <li><a href="#infos" style="text-decoration: none; color: #fff;">Infos</a></li>
+            <li><a href="#contact" style="text-decoration: none; color: #fff;">Contact</a></li>
+        </ul>
+    </div>
+    <div id="map-container"></div>
+    <div id="info-panel">
+        <div id="info-content">
+            <!-- Data will be displayed here when an area is clicked -->
+        </div>
+        <div id="info-panel-arrow" onclick="toggleInfoPanel()"></div>
+        <div id="map-in-panel">
+            <!-- New map will be displayed here when an area is clicked -->
+        </div>
+    </div>
     <script>
-        // Function to initialize the map
+        let infoPanelVisible = false;
+        let mapInPanel;
+
+        function toggleInfoPanel() {
+            const infoPanel = document.getElementById("info-panel");
+            infoPanelVisible = !infoPanelVisible;
+
+            if (infoPanelVisible) {
+                infoPanel.style.transform = "translateX(0)"; // Show the panel
+            } else {
+                infoPanel.style.transform = "translateX(100%)"; // Hide the panel
+            }
+        }
+
         function initMap() {
-            // Define the bounds for the Isle of La Réunion
-            const islandBounds = new google.maps.LatLngBounds(
-                new google.maps.LatLng(-21.4012, 55.1643), // Southwest corner of the island
-                new google.maps.LatLng(-20.7103, 55.9085)  // Northeast corner of the island
-            );
-
-            // Create a new map object centered at the Isle of La Réunion
-            const map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: -21.1151, lng: 55.5364 }, // Center of the island
-                zoom: 10, // Set the initial zoom level
-                restriction: {
-                    latLngBounds: islandBounds,
-                    strictBounds: false // Allow zooming out slightly beyond the island
-                }
+            const map = new google.maps.Map(document.getElementById("map-container"), {
+                center: { lat: -21.1151, lng: 55.5364 }, // La Reunion coordinates
+                zoom: 10,
             });
 
-            // Add your custom layer to the map (replace with your own layer)
-            const customLayer = new google.maps.KmlLayer({
-                url: 'URL_TO_YOUR_CUSTOM_LAYER.kml', // Replace with your KML/KMZ file URL
-                map: map
-            });
+            // Fetch data from the JSON file
+            fetch('data.json')
+                .then(response => response.json())
+                .then(data => {
+                    // Loop through the data and create polygons for each area
+                    data.forEach((areaData) => {
+                        const polygon = new google.maps.Polygon({
+                            paths: areaData.coordinates.map(coord => ({
+                                lat: parseFloat(coord.lat),
+                                lng: parseFloat(coord.lng)
+                            })),
+                            map: map,
+                        });
 
-            // Optionally, you can add markers or other features to the map here
-            /*
-            const marker = new google.maps.Marker({
-                position: { lat: -21.1151, lng: 55.5364 }, // Example marker position
-                map: map,
-                title: 'My Marker'
-            });
-            */
+                        // Add click event listener to the polygon to open the info panel with data
+                        polygon.addListener("click", () => {
+                            const infoContent = `
+                                <h3>${areaData.name}</h3>
+                                <p>${areaData.description}</p>
+                            `;
+                            document.getElementById("info-content").innerHTML = infoContent;
+                            toggleInfoPanel(); // Open or hide the panel when an area is clicked
+
+                            // Create a new map in the panel centered on the clicked area
+                            const mapOptions = {
+                                center: new google.maps.LatLng(areaData.coordinates[0].lat, areaData.coordinates[0].lng),
+                                zoom: 18,
+                            };
+                            mapInPanel = new google.maps.Map(document.getElementById("map-in-panel"), mapOptions);
+                            const imageBounds = new google.maps.LatLngBounds(
+                                new google.maps.LatLng(areaData.coordinates[0].lat, areaData.coordinates[0].lng),
+                                new google.maps.LatLng(areaData.coordinates[1].lat, areaData.coordinates[1].lng)
+                            );
+                            const imageOverlay = new google.maps.GroundOverlay(
+                                areaData.image, // Image URL
+                                imageBounds
+                            );
+                            imageOverlay.setMap(mapInPanel);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                });
         }
     </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxA1cdWCvsuIZsdxrWAsqXwIX5zn4D_6Q&callback=initMap" async defer></script>
 </body>
 </html>
