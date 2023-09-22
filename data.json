@@ -8,7 +8,7 @@
             { "lat": -21.113, "lng": 55.538 }
         ],
         "description": "Description of Area 1",
-        "image": "area1.jpeg"
+        "image": "https://github.com/TonioElPuebloSchool/Test_Site/blob/main/area1.jpeg"
     },
     {
         "name": "Area 2",
